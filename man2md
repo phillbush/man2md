@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
-# tbgen generate a md document from a man page
-# tbgen is in public domain
+# man2md generate a markdown document from a man page
+# man2md is in public domain
 
 BEGIN {
 	example = 0
