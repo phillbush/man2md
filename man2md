@@ -34,7 +34,8 @@ function twotags(m1, m2) {
 }
 
 /^[^.]/ {
-	$0 = $0 " "
+	if (!example)
+		$0 = $0 " "
 }
 
 /^\.TH / {
