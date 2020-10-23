@@ -1,0 +1,129 @@
+#!/usr/bin/awk -f
+# tbgen generate a md document from a man page
+# tbgen is in public domain
+
+BEGIN {
+	example = 0
+}
+
+function removetag() {
+	sub("^\...? ", "")
+}
+
+function twotags(m1, m2) {
+	removetag()
+	if (match($0, "\"")) {
+		n = split($0, a, "\"")
+		if (n > 0 && a[n] == "")
+			n--
+	} else {
+		n = split($0, a)
+	}
+	$0 = ""
+	for (i = 1; i <= n; i++) {
+		if (i % 2) {
+			sub("^ *", "&" m1, a[i])
+			sub(" *$", m1 "&", a[i])
+		} else {
+			sub("^ *", "&" m2, a[i])
+			sub(" *$", m2 "&", a[i])
+		}
+		$0 = $0 a[i]
+	}
+	$0 = $0 " "
+}
+
+/^[^.]/ {
+	$0 = $0 " "
+}
+
+/^\.TH / {
+	split($0, a)
+	$0 = sprintf("# %s(%s)\n", a[2], a[3])
+}
+
+/^\.SH / {
+	removetag()
+	$0 = sprintf("\n\n## %s\n\n", $0)
+}
+
+/^\.SS / {
+	removetag()
+	$0 = sprintf("\n\n### %s\n\n", $0)
+}
+
+/^\.PP$/ {
+	$0 = "\n\n"
+}
+
+/^\.PP$/ {
+	$0 = "\n\n"
+}
+
+/^\.IP$/ {
+	$0 = "\n\n"
+}
+
+/^\.TP$/ {
+	$0 = "\n\n* "
+	tp = 2
+}
+
+/^\.EX$/ {
+	example = 1
+	$0 = "```"
+
+}
+
+/^\.EE$/ {
+	example = 0
+	$0 = "```"
+}
+
+/^\.B / {
+	removetag()
+	$0 = sprintf("**%s** ", $0)
+}
+
+/^\.I / {
+	removetag()
+	$0 = sprintf("*%s* ", $0)
+}
+
+/^\.RB / {
+	twotags("", "**")
+}
+
+/^\.BR / {
+	twotags("**", "")
+}
+
+/^\.BI / {
+	twotags("**", "_")
+}
+
+/^\.IB / {
+	twotags("_", "**")
+}
+
+/^\.IR / {
+	twotags("_", "")
+}
+
+/^\.RI / {
+	twotags("", "_")
+}
+
+{
+	gsub("\\\\-", "-")
+	gsub("\\\\e", "\\")
+	gsub("\\\\\\(lq", "“")
+	gsub("\\\\\\(rq", "”")
+	printf "%s", $0
+	if (example)
+		print ""
+	if (tp == 1)
+		printf "\n\n  "
+	if (tp)
+		tp--
+}
