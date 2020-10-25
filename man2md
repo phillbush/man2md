@@ -89,6 +89,10 @@ function twotags(m1, m2) {
 	$0 = "```"
 }
 
+/^\.br$/ {
+	$0 = "\n"
+}
+
 /^\.B / {
 	removetag()
 	$0 = sprintf("**%s** ", $0)

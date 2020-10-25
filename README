@@ -1,3 +1,7 @@
                                  man2md
 
 man2md is a public domain man page to markdown converter written in awk
+
+Bugs.
+• man2md does not support inline markup (like `\fB`, `\fP`, etc).
+• man2md appends a space after each paragraph line.
