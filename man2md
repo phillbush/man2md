@@ -38,6 +38,10 @@ function twotags(m1, m2) {
 		$0 = $0 " "
 }
 
+/^\.\\"/ {
+	$0 = ""
+}
+
 /^\.TH / {
 	split($0, a)
 	$0 = sprintf("# %s(%s)\n", a[2], a[3])
