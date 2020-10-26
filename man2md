@@ -162,12 +162,7 @@ function inline(n, c) {
 }
 
 # new paragraph
-/^\.PP$/ {
-	$0 = "\n\n"
-}
-
-# new paragraph
-/^\.P$/ {
+/^\.(PP|P|LP)$/ {
 	$0 = "\n\n"
 }
 
