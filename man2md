@@ -64,6 +64,11 @@ function inline(n, c) {
 	}
 }
 
+# remove inline comments
+{
+	sub("\\\\\".*$", "")
+}
+
 # conditional markup (ignored)
 /^\.(if|ie|el) / {
 	if (match($0, "\\\\\\{") != 0) {
@@ -90,7 +95,7 @@ function inline(n, c) {
 		$0 = $0 " "
 }
 
-# macro definition
+# inline macro definition
 /^\.ds / {
 	removetag()
 	n = split($0, a)
