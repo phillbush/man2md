@@ -144,6 +144,7 @@ function twotags(m1, m2, n, beg, i) {
 {
 	gsub("\\\\-", "-")
 	gsub("\\\\e", "\\")
+	gsub("\\\\\\(dq", "\"")
 	gsub("\\\\\\(lq", "“")
 	gsub("\\\\\\(rq", "”")
 	if (!example)
