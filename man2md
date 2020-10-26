@@ -8,7 +8,7 @@ BEGIN {
 }
 
 function removetag() {
-	sub("^\...? ", "")
+	sub("^\...? *", "")
 }
 
 function twotags(m1, m2, n, beg, i) {
@@ -37,9 +37,37 @@ function twotags(m1, m2, n, beg, i) {
 	$0 = $0 " "
 }
 
+function inline(n, c) {
+	for (i in ds)
+		gsub("\\\\\\*\\(" i, ds[i])
+	gsub("\\\\-", "-")
+	gsub("\\\\e", "\\")
+	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "")
+	gsub("\\\\\\(dq", "\"")
+	gsub("\\\\\\(lq", "“")
+	gsub("\\\\\\(rq", "”")
+	while ((n = match($0, "\\\\f.")) != 0) {
+		c = substr($0, n + 2, 1)
+		if (c == "B") {
+			emphasis = "**"
+		} else if (c == "I") {
+			emphasis = "_"
+		}
+		sub("\\\\f.", emphasis)
+	}
+}
+
 /^[^.]/ {
 	if (!example)
 		$0 = $0 " "
+}
+
+/^\.ds / {
+	removetag()
+	n = split($0, a)
+	sub("^[^ ]* ", "")
+	ds[a[1]] = $0
+	$0 = ""
 }
 
 /^\.\\"/ {
@@ -143,22 +171,9 @@ function twotags(m1, m2, n, beg, i) {
 }
 
 {
-	gsub("\\\\-", "-")
-	gsub("\\\\e", "\\")
-	gsub("\\\\\\(dq", "\"")
-	gsub("\\\\\\(lq", "“")
-	gsub("\\\\\\(rq", "”")
+	inline()
 	if (!example) {
 		gsub("<", "\\<")
-		while ((n = match($0, "\\\\f.")) != 0) {
-			c = substr($0, n + 2, 1)
-			if (c == "B") {
-				emphasis = "**"
-			} else if (c == "I") {
-				emphasis = "_"
-			}
-			sub("\\\\f.", emphasis)
-		}
 	}
 	printf "%s", $0
 	if (example)
