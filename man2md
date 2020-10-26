@@ -95,6 +95,14 @@ function inline(n, c) {
 		$0 = $0 " "
 }
 
+# normal macro definition (ignored)
+/^\.de / {
+	while (match($0, "^\\.\\.$}")) {
+		getline
+	}
+	$0 = ""
+}
+
 # inline macro definition
 /^\.ds / {
 	removetag()
