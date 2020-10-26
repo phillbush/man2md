@@ -4,6 +4,7 @@
 
 BEGIN {
 	example = 0
+	emphasis = ""
 }
 
 function removetag() {
@@ -147,8 +148,18 @@ function twotags(m1, m2, n, beg, i) {
 	gsub("\\\\\\(dq", "\"")
 	gsub("\\\\\\(lq", "“")
 	gsub("\\\\\\(rq", "”")
-	if (!example)
+	if (!example) {
 		gsub("<", "\\<")
+		while ((n = match($0, "\\\\f.")) != 0) {
+			c = substr($0, n + 2, 1)
+			if (c == "B") {
+				emphasis = "**"
+			} else if (c == "I") {
+				emphasis = "_"
+			}
+			sub("\\\\f.", emphasis)
+		}
+	}
 	printf "%s", $0
 	if (example)
 		print ""

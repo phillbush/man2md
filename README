@@ -4,5 +4,4 @@ man2md is a public domain man page to github-flavored markdown converter
 written in POSIX awk.
 
 Bugs.
-• man2md does not support inline markup (like `\fB`, `\fP`, etc).
 • man2md appends a space after each paragraph line.
