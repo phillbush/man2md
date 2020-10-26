@@ -57,6 +57,15 @@ function inline(n, c) {
 	}
 }
 
+/^\.(if|ie|el) / {
+	if (match($0, "\\\\\\{") != 0) {
+		while (match($0, "^\\.\\\\\\}") == 0) {
+			getline
+		}
+	}
+	$0 = ""
+}
+
 /^[^.]/ {
 	if (!example)
 		$0 = $0 " "
