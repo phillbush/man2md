@@ -7,10 +7,12 @@ BEGIN {
 	emphasis = ""
 }
 
+# remove the initial .SOMETHING tag
 function removetag() {
 	sub("^\...? *", "")
 }
 
+# process twofold font markup (.IR, .BR, etc)
 function twotags(m1, m2, n, beg, i) {
 	removetag()
 	beg = 1
@@ -37,18 +39,20 @@ function twotags(m1, m2, n, beg, i) {
 	$0 = $0 " "
 }
 
+# process inline markup
 function inline(n, c) {
-	gsub("\\\\\\*?\\(dq", "\"")
-	gsub("\\\\\\*?\\(lq", "“")
-	gsub("\\\\\\*?\\(rq", "”")
-	for (i in ds)
+	gsub("\\\\\\*?\\(dq", "\"")             # double quote
+	gsub("\\\\\\*?\\(lq", "“")              # left double quote
+	gsub("\\\\\\*?\\(rq", "”")              # right double quote
+	for (i in ds)                           # .ds definitions
 		gsub("\\\\\\*\\(" i, ds[i])
-	gsub("\\\\-", "-")
-	gsub("\\\\e", "\\")
-	gsub("\\\\( |~|0)", " ")
-	gsub("\\\\(\\||\\^)", "")
-	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "")
-	while ((n = match($0, "\\\\f.")) != 0) {
+	gsub("\\\\-", "-")                      # hyphen
+	gsub("\\\\e", "\\")                     # backslash
+	gsub("\\\\( |~)", " ")                  # unbreakable space (converted to regular space)
+	gsub("\\\\0", " ")                      # digit-size space (converted to regular space)
+	gsub("\\\\(\\||\\^)", "")               # 1/6th and 1/12th space (ignored)
+	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "") # font size change (ignored)
+	while ((n = match($0, "\\\\f.")) != 0) {        # inline font change
 		c = substr($0, n + 2, 1)
 		if (c == "B") {
 			emphasis = "**"
@@ -59,6 +63,7 @@ function inline(n, c) {
 	}
 }
 
+# conditional markup (ignored)
 /^\.(if|ie|el) / {
 	if (match($0, "\\\\\\{") != 0) {
 		while (match($0, "^\\.\\\\\\}") == 0) {
@@ -68,11 +73,13 @@ function inline(n, c) {
 	$0 = ""
 }
 
+# add space after non-example lines
 /^[^.]/ {
 	if (!example)
 		$0 = $0 " "
 }
 
+# macro definition
 /^\.ds / {
 	removetag()
 	n = split($0, a)
@@ -81,114 +88,134 @@ function inline(n, c) {
 	$0 = ""
 }
 
+# comment
 /^\.\\"/ {
 	$0 = ""
 }
 
+# adjust empty space before paragraph (ignored)
 /^\.PD/ {
 	$0 = ""
 	pd = 1
 }
 
+# title heading
 /^\.TH / {
 	split($0, a)
 	$0 = sprintf("# %s(%s)\n", a[2], a[3])
 }
 
+# section heading
 /^\.SH / {
 	removetag()
 	$0 = sprintf("\n\n## %s\n\n", $0)
 }
 
+# subsection heading
 /^\.SS / {
 	removetag()
 	$0 = sprintf("\n\n### %s\n\n", $0)
 }
 
+# new paragraph
 /^\.PP$/ {
 	$0 = "\n\n"
 }
 
-/^\.PP$/ {
-	$0 = "\n\n"
-}
-
+# new paragraph
 /^\.P$/ {
 	$0 = "\n\n"
 }
 
+# new indented paragraph (ignored)
 /^\.IP$/ {
 	$0 = "\n\n"
 }
 
+# new titled paragraph (converted to definition list item)
 /^\.TP$/ {
 	$0 = "\n\n* "
 	tp = 2
 }
 
+# begin indented section (interpreted as alias for .EX)
 /^\.RS$/ {
 	example = 1
 	$0 = "\n```"
 
 }
 
+# end indented section (interpreted as alias for .EE)
 /^\.RE$/ {
 	example = 0
 	$0 = "```"
 }
 
+# begin example (converted as ```)
 /^\.EX$/ {
 	example = 1
 	$0 = "\n```"
 
 }
 
+# end example (converted as ```)
 /^\.EE$/ {
 	example = 0
 	$0 = "```"
 }
 
+# line break
 /^\.br$/ {
 	$0 = "\n"
 }
 
+# bold font
 /^\.B / {
 	removetag()
 	$0 = sprintf("**%s** ", $0)
 }
 
+# italic font
 /^\.I / {
 	removetag()
 	$0 = sprintf("*%s* ", $0)
 }
 
+# roman-to-bold font
 /^\.RB / {
 	twotags("", "**")
 }
 
+# bold-to-roman font
 /^\.BR / {
 	twotags("**", "")
 }
 
+# bold-to-italic font
 /^\.BI / {
 	twotags("**", "_")
 }
 
+# italic-to-bold font
 /^\.IB / {
 	twotags("_", "**")
 }
 
+# italic-to-roman font
 /^\.IR / {
 	twotags("_", "")
 }
 
+# roman-to-italic font
 /^\.RI / {
 	twotags("", "_")
 }
 
+# process and print line
 {
 	inline()
 	if (!example) {
+		# this is necessary for <...> don't be interpreted as an html tag
 		gsub("<", "\\<")
 	}
 	printf "%s", $0
