@@ -74,6 +74,16 @@ function inline(n, c) {
 	$0 = ""
 }
 
+# ignored markup
+/^\.ig ?/ {
+	split($0, a)
+	end = a[2]
+	while (match($0, "^\\.\\.$}") && match($0, "^\\." end "$")) {
+		getline
+	}
+	$0 = ""
+}
+
 # add space after non-example lines
 /^[^.]/ {
 	if (!example)
