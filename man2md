@@ -51,6 +51,7 @@ function inline(n, c) {
 	gsub("\\\\( |~)", " ")                  # unbreakable space (converted to regular space)
 	gsub("\\\\0", " ")                      # digit-size space (converted to regular space)
 	gsub("\\\\(\\||\\^)", "")               # 1/6th and 1/12th space (ignored)
+	gsub("\\\\&", "")                       # zero-width character (ignored)
 	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "") # font size change (ignored)
 	while ((n = match($0, "\\\\f.")) != 0) {        # inline font change
 		c = substr($0, n + 2, 1)
@@ -90,6 +91,11 @@ function inline(n, c) {
 
 # comment
 /^\.\\"/ {
+	$0 = ""
+}
+
+# page break (ignored)
+/^\.bp ?/ {
 	$0 = ""
 }
 
