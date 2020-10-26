@@ -109,6 +109,21 @@ function inline(n, c) {
 	$0 = ""
 }
 
+# spacing control (ignored)
+/^\.sp ?/ {
+	$0 = ""
+}
+
+# indentation control (ignored)
+/^\.in ?/ {
+	$0 = ""
+}
+
+# temporary indentation control (ignored)
+/^\.ti ?/ {
+	$0 = ""
+}
+
 # adjust empty space before paragraph (ignored)
 /^\.PD/ {
 	$0 = ""
@@ -154,17 +169,15 @@ function inline(n, c) {
 	tp = 2
 }
 
-# begin indented section (interpreted as alias for .EX)
+# begin indented section (ignored)
 /^\.RS$/ {
-	example = 1
-	$0 = "\n```"
+	$0 = ""
 
 }
 
-# end indented section (interpreted as alias for .EE)
+# end indented section (ignored)
 /^\.RE$/ {
-	example = 0
-	$0 = "```"
+	$0 = ""
 }
 
 # begin example (converted as ```)
@@ -180,9 +193,26 @@ function inline(n, c) {
 	$0 = "```"
 }
 
+# no-fill mode
+/^\.nf$/ {
+	example = 1
+	$0 = ""
+}
+
+# fill mode
+/^\.fi$/ {
+	example = 0
+	$0 = ""
+}
+
 # line break
 /^\.br$/ {
 	$0 = "\n"
+}
+
+# multi-line font changing (ignored)
+/^\.ft ?/ {
+	$0 = ""
 }
 
 # bold font
