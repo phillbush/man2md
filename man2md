@@ -133,7 +133,7 @@ function inline(n, c) {
 }
 
 # new titled paragraph (converted to definition list item)
-/^\.TP$/ {
+/^\.TP ?/ {
 	$0 = "\n\n* "
 	tp = 2
 }
