@@ -117,8 +117,8 @@ function inline(n, c) {
 	$0 = ""
 }
 
-# page break (ignored)
-/^\.bp ?/ {
+# page control (ignored)
+/^\.(bp|ne|sv|os) ?/ {
 	$0 = ""
 }
 
