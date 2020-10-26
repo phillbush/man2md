@@ -38,14 +38,14 @@ function twotags(m1, m2, n, beg, i) {
 }
 
 function inline(n, c) {
+	gsub("\\\\\\*?\\(dq", "\"")
+	gsub("\\\\\\*?\\(lq", "“")
+	gsub("\\\\\\*?\\(rq", "”")
 	for (i in ds)
 		gsub("\\\\\\*\\(" i, ds[i])
 	gsub("\\\\-", "-")
 	gsub("\\\\e", "\\")
 	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "")
-	gsub("\\\\\\(dq", "\"")
-	gsub("\\\\\\(lq", "“")
-	gsub("\\\\\\(rq", "”")
 	while ((n = match($0, "\\\\f.")) != 0) {
 		c = substr($0, n + 2, 1)
 		if (c == "B") {
@@ -72,6 +72,11 @@ function inline(n, c) {
 
 /^\.\\"/ {
 	$0 = ""
+}
+
+/^\.PD/ {
+	$0 = ""
+	pd = 1
 }
 
 /^\.TH / {
@@ -178,8 +183,12 @@ function inline(n, c) {
 	printf "%s", $0
 	if (example)
 		print ""
-	if (tp == 1)
-		printf "\n\n  "
-	if (tp)
-		tp--
+	if (pd == 0) {
+		if (tp == 1)
+			printf "\n\n  "
+		if (tp)
+			tp--
+	}
+	if (pd)
+		pd = 0
 }
