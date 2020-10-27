@@ -86,8 +86,7 @@ function inline(n, c) {
 
 # ignored markup
 /^\.ig ?/ {
-	split($0, a)
-	end = a[2]
+	end = $2
 	while (match($0, "^\\.\\.$") == 0 && match($0, "^\\." end "$") == 0) {
 		getline
 	}
@@ -111,9 +110,8 @@ function inline(n, c) {
 # inline macro definition
 /^\.ds / {
 	removetag()
-	n = split($0, a)
 	sub("^[^ ]* ", "")
-	ds[a[1]] = $0
+	ds[$1] = $0
 	$0 = ""
 }
 
@@ -145,8 +143,7 @@ function inline(n, c) {
 
 # title heading
 /^\.TH / {
-	split($0, a)
-	$0 = sprintf("# %s(%s)\n", a[2], a[3])
+	$0 = sprintf("# %s(%s)\n", $2, $3)
 }
 
 # section heading
