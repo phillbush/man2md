@@ -16,9 +16,10 @@ function removetag() {
 
 # process twofold font markup (.IR, .BR, etc)
 function twotags(m1, m2, n, beg, i) {
-	if (example)
+	if (example) {
 		m1 = ""
 		m2 = ""
+	}
 	removetag()
 	beg = 1
 	if (match($0, "\"")) {
@@ -56,19 +57,8 @@ function onetag(m) {
 	$0 = sprintf(m "%s" m " ", $0)
 }
 
-# process inline markup
+# process inline font change
 function inline(n, c) {
-	gsub("\\\\\\*?\\(dq", "\"")             # double quote
-	gsub("\\\\\\*?\\(lq", "“")              # left double quote
-	gsub("\\\\\\*?\\(rq", "”")              # right double quote
-	for (i in ds)                           # .ds definitions
-		gsub("\\\\\\*\\(" i, ds[i])
-	gsub("\\\\-", "-")                      # hyphen
-	gsub("\\\\( |~)", " ")                  # unbreakable space (converted to regular space)
-	gsub("\\\\0", " ")                      # digit-size space (converted to regular space)
-	gsub("\\\\(\\||\\^)", "")               # 1/6th and 1/12th space (ignored)
-	gsub("\\\\&", "")                       # zero-width character (ignored)
-	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "") # font size change (ignored)
 	while ((n = match($0, "\\\\f.")) != 0) {        # inline font change
 		c = substr($0, n + 2, 1)
 		if (c == "B") {
@@ -82,6 +72,10 @@ function inline(n, c) {
 		sub("\\\\f.", oldemphasis emphasis)
 		oldemphasis = emphasis
 		emphasis = ""
+	}
+	if (!example) {
+		gsub("\\\\e\\*", "\\\\*")
+		gsub("\\\\e\\_", "\\\\_")
 	}
 	gsub("\\\\e", "\\")                     # backslash
 }
@@ -101,12 +95,34 @@ function getindentation(indent, i, str) {
 	ignore = 1
 }
 
-# remove inline comments and replace `` quotes
+# do substitutions
 {
+	# Replace troff digraphs by their symbols
+	gsub("\\\\\\(co", "©")
+	gsub("\\\\\\(<=", "≤")
+	gsub("\\\\\\(>=", "≥")
+	gsub("\\\\\\(!=", "≠")
+	gsub("\\\\\\(+-", "±")
+	gsub("\\\\\\(mu", "×")
+	gsub("\\\\\\(di", "÷")
+	gsub("\\\\\\*?\\(dq", "\"")             # double quote
+	gsub("\\\\\\*?\\(lq", "“")              # left double quote
+	gsub("\\\\\\*?\\(rq", "”")              # right double quote
+
+	for (i in ds)                           # .ds definitions
+		gsub("\\\\\\*\\(" i, ds[i])
+	gsub("\\\\-", "-")                      # hyphen
+	gsub("\\\\( |~)", " ")                  # unbreakable space (converted to regular space)
+	gsub("\\\\0", " ")                      # digit-size space (converted to regular space)
+	gsub("\\\\(\\||\\^)", "")               # 1/6th and 1/12th space (ignored)
+	gsub("\\\\&", "")                       # zero-width character (ignored)
+	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "") # font size change (ignored)
 	sub("\\\\\".*$", "")
 	if (!example) {
 		gsub("``", "“")                 # replace ``...'' with “...”
 		gsub("''", "”")                 # replace ``...'' with “...”
+		gsub("\\*", "\\*")
+		gsub("\\_", "\\_")
 	}
 }
 
