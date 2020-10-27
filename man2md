@@ -79,7 +79,9 @@ function inline(n, c) {
 		if (example) {
 			emphasis = ""
 		}
-		sub("\\\\f.", emphasis)
+		sub("\\\\f.", oldemphasis emphasis)
+		oldemphasis = emphasis
+		emphasis = ""
 	}
 	gsub("\\\\e", "\\")                     # backslash
 }
