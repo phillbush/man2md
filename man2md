@@ -4,6 +4,7 @@
 
 BEGIN {
 	example = 0
+	bullet = 0
 	indent = 0
 	emphasis = ""
 }
@@ -331,7 +332,7 @@ function getindentation(indent, i, str) {
 	if (pd == 0) {
 		indentation = getindentation(indent)
 		if (tp == 1 && bullet == 0) {
-			printf "\n" indentation "  "
+			printf "\n\n" indentation "  "
 		}
 		if (tp)
 			tp--
