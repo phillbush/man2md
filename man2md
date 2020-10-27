@@ -88,7 +88,7 @@ function inline(n, c) {
 function getindentation(indent, i, str) {
 	str = ""
 	for (i = 0; i < indent; i++) {
-		str = str "  "
+		str = str "    "
 	}
 	return str
 }
