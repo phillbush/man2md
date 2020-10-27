@@ -4,6 +4,7 @@
 
 BEGIN {
 	example = 0
+	indent = 0
 	emphasis = ""
 }
 
@@ -14,6 +15,9 @@ function removetag() {
 
 # process twofold font markup (.IR, .BR, etc)
 function twotags(m1, m2, n, beg, i) {
+	if (example)
+		m1 = ""
+		m2 = ""
 	removetag()
 	beg = 1
 	if (match($0, "\"")) {
@@ -39,6 +43,18 @@ function twotags(m1, m2, n, beg, i) {
 	$0 = $0 " "
 }
 
+# process onefold font markup (.B, .I)
+function onetag(m) {
+	removetag()
+	if (example)
+		m = ""
+	if (match($0, "^\"")) {
+		sub("^\"", "")
+		sub("\"$", "")
+	}
+	$0 = sprintf(m "%s" m " ", $0)
+}
+
 # process inline markup
 function inline(n, c) {
 	gsub("\\\\\\*?\\(dq", "\"")             # double quote
@@ -47,7 +63,6 @@ function inline(n, c) {
 	for (i in ds)                           # .ds definitions
 		gsub("\\\\\\*\\(" i, ds[i])
 	gsub("\\\\-", "-")                      # hyphen
-	gsub("\\\\e", "\\")                     # backslash
 	gsub("\\\\( |~)", " ")                  # unbreakable space (converted to regular space)
 	gsub("\\\\0", " ")                      # digit-size space (converted to regular space)
 	gsub("\\\\(\\||\\^)", "")               # 1/6th and 1/12th space (ignored)
@@ -60,18 +75,36 @@ function inline(n, c) {
 		} else if (c == "I") {
 			emphasis = "_"
 		}
+		if (example) {
+			emphasis = ""
+		}
 		sub("\\\\f.", emphasis)
 	}
+	gsub("\\\\e", "\\")                     # backslash
+}
+
+# get initial indentation
+function getindentation(indent, i, str) {
+	str = ""
+	for (i = 0; i < indent; i++) {
+		str = str "  "
+	}
+	return str
 }
 
 # remove normal comment
 /^\.\\"/ {
 	$0 = ""
+	ignore = 1
 }
 
-# remove inline comments
+# remove inline comments and replace `` quotes
 {
 	sub("\\\\\".*$", "")
+	if (!example) {
+		gsub("``", "“")                 # replace ``...'' with “...”
+		gsub("''", "”")                 # replace ``...'' with “...”
+	}
 }
 
 # conditional markup (ignored)
@@ -82,6 +115,7 @@ function inline(n, c) {
 		}
 	}
 	$0 = ""
+	ignore = 1
 }
 
 # ignored markup
@@ -91,6 +125,7 @@ function inline(n, c) {
 		getline
 	}
 	$0 = ""
+	ignore = 1
 }
 
 # add space after non-example lines
@@ -105,39 +140,47 @@ function inline(n, c) {
 		getline
 	}
 	$0 = ""
+	ignore = 1
 }
 
 # inline macro definition
 /^\.ds / {
 	removetag()
+	macro = $1
 	sub("^[^ ]* ", "")
-	ds[$1] = $0
+	ds[macro] = $0
 	$0 = ""
+	ignore = 1
 }
 
 # page control (ignored)
 /^\.(bp|ne|sv|os) ?/ {
 	$0 = ""
+	ignore = 1
 }
 
 # spacing control (ignored)
 /^\.sp ?/ {
 	$0 = ""
+	ignore = 1
 }
 
 # indentation control (ignored)
 /^\.in ?/ {
 	$0 = ""
+	ignore = 1
 }
 
 # temporary indentation control (ignored)
 /^\.ti ?/ {
 	$0 = ""
+	ignore = 1
 }
 
 # adjust empty space before paragraph (ignored)
 /^\.PD/ {
 	$0 = ""
+	ignore = 1
 	pd = 1
 }
 
@@ -159,77 +202,86 @@ function inline(n, c) {
 }
 
 # new paragraph
-/^\.(PP|P|LP)$/ {
-	$0 = "\n\n"
-}
-
-# new indented paragraph (ignored)
-/^\.IP$/ {
-	$0 = "\n\n"
+/^\.(PP|P|LP|IP)$/ {
+	initial = "\n"
+	indentation = getindentation(indent)
+	if (rs) {
+		initial = ""
+		indentation = ""
+	}
+	$0 = initial "\n" indentation
 }
 
 # new titled paragraph (converted to definition list item)
 /^\.TP ?/ {
-	$0 = "\n\n* "
+	initial = "\n"
+	indentation = getindentation(indent)
+	if (rs) {
+		initial = ""
+		indentation = ""
+	}
+	$0 = initial indentation "* "
 	tp = 2
 }
 
-# begin indented section (ignored)
+# begin indented section
 /^\.RS$/ {
-	$0 = ""
-
+	rs = 2
+	indent++
+	indentation = getindentation(indent)
+	$0 = "\n\n" indentation
 }
 
-# end indented section (ignored)
+# end indented section
 /^\.RE$/ {
 	$0 = ""
+	indent--
 }
 
 # begin example (converted as ```)
 /^\.EX$/ {
 	example = 1
 	$0 = "\n```"
-
 }
 
 # end example (converted as ```)
 /^\.EE$/ {
 	example = 0
-	$0 = "```"
+	$0 = "```\n"
 }
 
 # no-fill mode
 /^\.nf$/ {
 	example = 1
-	$0 = ""
+	$0 = "\n```"
 }
 
 # fill mode
 /^\.fi$/ {
 	example = 0
-	$0 = ""
+	$0 = "```\n"
 }
 
 # line break
 /^\.br$/ {
-	$0 = "\n"
+	indentation = getindentation(indent)
+	$0 = "\n" indentation
 }
 
 # multi-line font changing (ignored)
 /^\.ft ?/ {
 	$0 = ""
+	ignore = 1
 }
 
 # bold font
 /^\.B / {
-	removetag()
-	$0 = sprintf("**%s** ", $0)
+	onetag("**")
 }
 
 # italic font
 /^\.I / {
-	removetag()
-	$0 = sprintf("*%s* ", $0)
+	onetag("_")
 }
 
 # roman-to-bold font
@@ -269,15 +321,24 @@ function inline(n, c) {
 		# this is necessary for <...> don't be interpreted as an html tag
 		gsub("<", "\\<")
 	}
+	if ($0 == "\\(bu ") {           # check if content is a bullet
+		$0 = ""
+		bullet = 1
+	}
 	printf "%s", $0
-	if (example)
+	if (example && !ignore)
 		print ""
 	if (pd == 0) {
-		if (tp == 1)
-			printf "\n\n  "
+		indentation = getindentation(indent)
+		if (tp == 1 && bullet == 0) {
+			printf "\n" indentation "  "
+		}
 		if (tp)
 			tp--
 	}
-	if (pd)
-		pd = 0
+	if (rs)
+		rs--
+	pd = 0
+	bullet = 0
+	ignore = 0
 }
