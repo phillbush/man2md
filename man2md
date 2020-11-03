@@ -6,16 +6,18 @@ BEGIN {
 	example = 0
 	bullet = 0
 	indent = 0
+	continueline = 0
 	emphasis = ""
 }
 
 # remove the initial .SOMETHING tag
 function removetag() {
-	sub("^\...? *", "")
+	sub("^\\...? *", "")
 }
 
 # process twofold font markup (.IR, .BR, etc)
-function twotags(m1, m2, n, beg, i) {
+function twotags(m1, m2, tag, n, beg, i) {
+	tag = $1
 	if (example) {
 		m1 = ""
 		m2 = ""
@@ -42,11 +44,14 @@ function twotags(m1, m2, n, beg, i) {
 		}
 		$0 = $0 a[i]
 	}
-	$0 = $0 " "
+	$0 = tag " " $0
+	if (!example)
+		$0 = $0 " "
 }
 
 # process onefold font markup (.B, .I)
-function onetag(m) {
+function onetag(m, tag) {
+	tag = $1
 	removetag()
 	if (example)
 		m = ""
@@ -55,6 +60,7 @@ function onetag(m) {
 		sub("\"$", "")
 	}
 	$0 = sprintf(m "%s" m " ", $0)
+	$0 = tag " " $0
 }
 
 # process inline font change
@@ -115,7 +121,6 @@ $0 {
 	gsub("\\\\( |~)", " ")                  # unbreakable space (converted to regular space)
 	gsub("\\\\0", " ")                      # digit-size space (converted to regular space)
 	gsub("\\\\(\\||\\^)", "")               # 1/6th and 1/12th space (ignored)
-	gsub("\\\\&", "")                       # zero-width character (ignored)
 	gsub("\\\\s([+-]?[0-9]|\\([+-]?[0-9][0-9]|[+-]?\\([0-9][0-9])", "") # font size change (ignored)
 	sub("\\\\\".*$", "")
 	if (!example) {
@@ -123,6 +128,10 @@ $0 {
 		gsub("''", "”")                 # replace ``...'' with “...”
 		gsub("\\*", "\\*")
 		gsub("\\_", "\\_")
+	}
+	if ($0 ~ /\\c$/) {
+		continueline = 1
+		sub("\\\\c$", "")
 	}
 }
 
@@ -210,14 +219,16 @@ $1 ~ /^\.TH$/ {
 
 # section heading
 $1 ~ /^\.SH$/ {
+	tag = $1
 	removetag()
-	$0 = sprintf("\n\n## %s\n\n", $0)
+	$0 = sprintf("%s \n\n## %s\n\n", tag, $0)
 }
 
 # subsection heading
 $1 ~ /^\.SS$/ {
+	tag = $1
 	removetag()
-	$0 = sprintf("\n\n### %s\n\n", $0)
+	$0 = sprintf("%s \n\n### %s\n\n", tag, $0)
 }
 
 # new paragraph
@@ -335,6 +346,8 @@ $1 ~ /^\.RI$/ {
 
 # process and print line
 {
+	removetag()
+	gsub("\\\\&", "")               # remove zero-width character
 	inline()
 	if (!example) {
 		# this is necessary for <...> don't be interpreted as an html tag
@@ -345,7 +358,7 @@ $1 ~ /^\.RI$/ {
 		bullet = 1
 	}
 	printf "%s", $0
-	if (example && !ignore)
+	if (!continueline && example && !ignore)
 		print ""
 	if (pd == 0) {
 		indentation = getindentation(indent)
@@ -360,4 +373,5 @@ $1 ~ /^\.RI$/ {
 	pd = 0
 	bullet = 0
 	ignore = 0
+	continueline = 0
 }
