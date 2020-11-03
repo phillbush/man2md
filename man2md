@@ -148,7 +148,7 @@ $1 ~ /^\.ig$/ {
 }
 
 # add space after non-example lines
-$1 !~ /^\./ {
+$1 ~ /^[^.]/ {
 	if (!example)
 		$0 = $0 " "
 }
