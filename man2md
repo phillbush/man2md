@@ -147,7 +147,7 @@ $1 ~ /^\.(if|ie|el)$/ {
 }
 
 # ignored markup
-$1 ~ /^\.ig$/ {
+$1 == ".ig" {
 	end = $2
 	while (match($0, "^\\.\\.$") == 0 && match($0, "^\\." end "$") == 0) {
 		getline
@@ -163,7 +163,7 @@ $1 ~ /^[^.]/ {
 }
 
 # normal macro definition (ignored)
-$1 ~ /^\.de$/ {
+$1 == ".de" {
 	while (match($0, "^\\.\\.$") == 0) {
 		getline
 	}
@@ -172,7 +172,7 @@ $1 ~ /^\.de$/ {
 }
 
 # inline macro definition
-$1 ~ /^\.ds$/ {
+$1 == ".ds" {
 	removetag()
 	macro = $1
 	sub("^[^ ]* ", "")
@@ -188,74 +188,69 @@ $1 ~ /^\.(bp|ne|sv|os)$/ {
 }
 
 # spacing control (ignored)
-$1 ~ /^\.sp$/ {
+$1 == ".sp" {
 	$0 = ""
 	ignore = 1
 }
 
 # indentation control (ignored)
-$1 ~ /^\.in$/ {
+$1 == ".in" {
 	$0 = ""
 	ignore = 1
 }
 
 # temporary indentation control (ignored)
-$1 ~ /^\.ti$/ {
+$1 == ".ti" {
 	$0 = ""
 	ignore = 1
 }
 
 # adjust empty space before paragraph (ignored)
-$1 ~ /^\.PD$/ {
+$1 == ".PD" {
 	$0 = ""
 	ignore = 1
 	pd = 1
 }
 
 # title heading
-$1 ~ /^\.TH$/ {
+$1 == ".TH" {
 	$0 = sprintf("# %s(%s)\n", $2, $3)
 }
 
 # section heading
-$1 ~ /^\.SH$/ {
+$1 == ".SH" {
 	tag = $1
 	removetag()
 	$0 = sprintf("%s \n\n## %s\n\n", tag, $0)
 }
 
 # subsection heading
-$1 ~ /^\.SS$/ {
+$1 == ".SS" {
 	tag = $1
 	removetag()
 	$0 = sprintf("%s \n\n### %s\n\n", tag, $0)
 }
 
 # new paragraph
-$1 ~ /^\.(PP|P|LP|IP)$/ {
+$1 ~ /^\.(PP|P|LP|IP|TP)$/ {
 	initial = "\n"
 	indentation = getindentation(indent)
 	if (rs) {
 		initial = ""
 		indentation = ""
 	}
-	$0 = initial "\n" indentation
-}
-
-# new titled paragraph (converted to definition list item)
-$1 ~ /^\.TP$/ {
-	initial = "\n"
-	indentation = getindentation(indent)
-	if (rs) {
-		initial = ""
-		indentation = ""
+	if ($1 == ".TP") {
+		$0 = initial indentation "* "
+		tp = 2
+	} else if ($1 == ".IP" && $2 == "\\(bu") { 
+		$0 = initial indentation "* "
+	} else {
+		$0 = initial "\n" indentation
 	}
-	$0 = initial indentation "* "
-	tp = 2
 }
 
 # begin indented section
-$1 ~ /^\.RS$/ {
+$1 == ".RS" {
 	rs = 2
 	indent++
 	indentation = getindentation(indent)
@@ -263,84 +258,84 @@ $1 ~ /^\.RS$/ {
 }
 
 # end indented section
-$1 ~ /^\.RE$/ {
+$1 == ".RE" {
 	$0 = ""
 	indent--
 }
 
 # begin example (converted as ```)
-$1 ~ /^\.EX$/ {
+$1 == ".EX" {
 	example = 1
 	$0 = "\n```"
 }
 
 # end example (converted as ```)
-$1 ~ /^\.EE$/ {
+$1 == ".EE" {
 	example = 0
 	$0 = "```\n"
 }
 
 # no-fill mode
-$1 ~ /^\.nf$/ {
+$1 == ".nf" {
 	example = 1
 	$0 = "\n```"
 }
 
 # fill mode
-$1 ~ /^\.fi$/ {
+$1 == ".fi" {
 	example = 0
 	$0 = "```\n"
 }
 
 # line break
-$1 ~ /^\.br$/ {
+$1 == ".br" {
 	indentation = getindentation(indent)
 	$0 = "\n" indentation
 }
 
 # multi-line font changing (ignored)
-$1 ~ /^\.ft$/ {
+$1 == ".ft" {
 	$0 = ""
 	ignore = 1
 }
 
 # bold font
-$1 ~ /^\.B$/ {
+$1 == ".B" {
 	onetag("**")
 }
 
 # italic font
-$1 ~ /^\.I$/ {
+$1 == ".I" {
 	onetag("_")
 }
 
 # roman-to-bold font
-$1 ~ /^\.RB$/ {
+$1 == ".RB" {
 	twotags("", "**")
 }
 
 # bold-to-roman font
-$1 ~ /^\.BR$/ {
+$1 == ".BR" {
 	twotags("**", "")
 }
 
 # bold-to-italic font
-$1 ~ /^\.BI$/ {
+$1 == ".BI" {
 	twotags("**", "_")
 }
 
 # italic-to-bold font
-$1 ~ /^\.IB$/ {
+$1 == ".IB" {
 	twotags("_", "**")
 }
 
 # italic-to-roman font
-$1 ~ /^\.IR$/ {
+$1 == ".IR" {
 	twotags("_", "")
 }
 
 # roman-to-italic font
-$1 ~ /^\.RI$/ {
+$1 == ".RI" {
 	twotags("", "_")
 }
 
