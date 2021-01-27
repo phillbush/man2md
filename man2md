@@ -111,6 +111,7 @@ $0 {
 	gsub("\\\\\\(+-", "±")
 	gsub("\\\\\\(mu", "×")
 	gsub("\\\\\\(di", "÷")
+	gsub("\\\\\\*?\\(aq", "\'")             # single quote
 	gsub("\\\\\\*?\\(dq", "\"")             # double quote
 	gsub("\\\\\\*?\\(lq", "“")              # left double quote
 	gsub("\\\\\\*?\\(rq", "”")              # right double quote
